@@ -4,61 +4,54 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Prédio AR GPS</title>
+<title>Teste A-Frame</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://unpkg.com/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
-}
-
-.info {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 999;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-    font-family: Arial;
+body{
+    margin:0;
 }
 </style>
+
 </head>
 
 <body>
 
-<div class="info">
-    Caminhe até o terreno e permita o acesso ao GPS e à câmera.
-</div>
+<a-scene>
 
-<a-scene
-    vr-mode-ui="enabled: false"
-    embedded
-    renderer="logarithmicDepthBuffer: true;"
-    arjs="sourceType: webcam;
-          videoTexture: true;
-          debugUIEnabled: false">
+    <!-- Caixa gigante -->
 
-    <a-assets>
-        <a-asset-item
-            id="predio"
-            src="predio.glb">
-        </a-asset-item>
-    </a-assets>
+    <a-box
+        position="0 0 -10"
+        width="5"
+        height="10"
+        depth="5"
+        color="red">
+    </a-box>
 
-    <!-- MODELO 3D -->
-<a-box
-    position="0 -1 -5"
-    width="5"
-    height="10"
-    depth="5">
-</a-box>
+    <!-- Chão -->
 
-<a-camera></a-camera>
+    <a-plane
+        position="0 -5 -10"
+        rotation="-90 0 0"
+        width="50"
+        height="50"
+        color="#7BC8A4">
+    </a-plane>
+
+    <!-- Luz -->
+
+    <a-light
+        type="ambient"
+        intensity="1">
+    </a-light>
+
+    <!-- Câmera -->
+
+    <a-camera
+        position="0 0 0">
+    </a-camera>
 
 </a-scene>
 
