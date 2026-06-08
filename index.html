@@ -11,19 +11,20 @@
 
 <a-scene embedded arjs>
 
-<a-assets>
-    <a-asset-item
-        id="predio"
-        src="predio.glb">
-    </a-asset-item>
-</a-assets>
+    <a-box
+        color="red"
+        width="0.2"
+        height="0.2"
+        depth="0.2"
+        position="0 0 0">
+    </a-box>
 
 <a-marker preset="hiro">
 
     <a-entity
         gltf-model="#predio"
-        scale="0.1 0.1 0.1"
-        position="0 0 0"
+        scale="1 1 1"
+        position="0 -1 0"
         rotation="-90 0 0">
     </a-entity>
 
