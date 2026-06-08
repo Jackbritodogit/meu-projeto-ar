@@ -20,17 +20,18 @@ body{
 
 <a-scene>
 
-    <!-- Caixa gigante -->
+    <a-assets>
+        <a-asset-item
+            id="predio"
+            src="predio.glb">
+        </a-asset-item>
+    </a-assets>
 
-    <a-box
+    <a-entity
+        gltf-model="#predio"
         position="0 0 -10"
-        width="5"
-        height="10"
-        depth="5"
-        color="red">
-    </a-box>
-
-    <!-- Chão -->
+        scale="1 1 1">
+    </a-entity>
 
     <a-plane
         position="0 -5 -10"
@@ -40,18 +41,12 @@ body{
         color="#7BC8A4">
     </a-plane>
 
-    <!-- Luz -->
-
     <a-light
         type="ambient"
         intensity="1">
     </a-light>
 
-    <!-- Câmera -->
-
-    <a-camera
-        position="0 0 0">
-    </a-camera>
+    <a-camera></a-camera>
 
 </a-scene>
 
