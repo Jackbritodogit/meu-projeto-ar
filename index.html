@@ -51,24 +51,14 @@ body {
     </a-assets>
 
     <!-- MODELO 3D -->
+<a-entity
+    gltf-model="#predio"
+    position="0 0 -5"
+    scale="1 1 1"
+    rotation="0 0 0">
+</a-entity>
 
-    <a-entity
-        gltf-model="#predio"
-
-        gps-new-entity-place="
-            latitude: -5.494951;
-            longitude: -47.478713;
-        "
-
-        scale="100 100 100"
-        rotation="0 0 0">
-    </a-entity>
-
-    <!-- CÂMERA -->
-
-    <a-camera
-        gps-new-camera="gpsMinDistance: 5">
-    </a-camera>
+<a-camera></a-camera>
 
 </a-scene>
 
