@@ -76,6 +76,8 @@ body { overflow: hidden; font-family: 'Segoe UI', sans-serif; }
     <span class="value" id="lon">—</span><br>
     <span class="label">Precisão</span><br>
     <span class="value" id="acc">—</span><br>
+    <span class="label">Escala atual</span><br>
+    <span class="value" id="escala-val">0.01</span><br>
     <span class="label">Distância ao prédio</span><br>
     <span class="value" id="dist">—</span>
 </div>
@@ -112,14 +114,17 @@ body { overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         - rotation: "-90 0 0" corrige modelos exportados deitados do SketchUp
         - gps-new-entity-place: suas coordenadas GPS do prédio
     -->
+    <!--
+        scale="0.01 0.01 0.01" converte centímetros do SketchUp para metros no AR.js
+        Seu prédio tem 4000cm = 40m, com essa escala fica 40 unidades = 40m no mundo real ✓
+    -->
     <a-entity
         id="predioGPS"
         gltf-model="#predio"
-        gps-new-entity-place="latitude: -5.495345; longitude: -47.478705;"
-        scale="1 1 1"
+        gps-new-entity-place="latitude: -5.494951; longitude: -47.478713;"
+        scale="0.01 0.01 0.01"
         position="0 0 0"
-        rotation="-90 0 0"
-        animation__load="property: scale; from: 0 0 0; to: 1 1 1; dur: 600; easing: easeOutBack; startEvents: model-loaded">
+        rotation="-90 0 0">
     </a-entity>
 
     <!--
@@ -143,18 +148,19 @@ const PREDIO_LAT = -5.494951;
 const PREDIO_LON = -47.478713;
 
 // ─── Controles de escala e altura em tempo real ────────────────────────
-let escalaAtual = 1;
+let escalaAtual = 0.01;
 let alturaAtual = 0;
 
 function ajustarEscala(fator) {
     escalaAtual *= fator;
-    escalaAtual = Math.max(0.01, Math.min(1000, escalaAtual));
+    escalaAtual = Math.max(0.0001, Math.min(100, escalaAtual));
     const el = document.getElementById('predioGPS');
     el.setAttribute('scale', `${escalaAtual} ${escalaAtual} ${escalaAtual}`);
+    document.getElementById('escala-val').textContent = escalaAtual.toFixed(4);
 }
 
 function ajustarAltura(delta) {
-    alturaAtual += delta;
+    alturaAtual += delta * escalaAtual * 100; // delta proporcional à escala
     const el = document.getElementById('predioGPS');
     el.setAttribute('position', `0 ${alturaAtual} 0`);
 }
