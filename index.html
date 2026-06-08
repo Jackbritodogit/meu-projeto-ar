@@ -3,213 +3,223 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prédio AR GPS</title>
+<title>Prédio AR - Marcador</title>
 
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://unpkg.com/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { overflow: hidden; font-family: 'Segoe UI', sans-serif; }
 
-#info {
-    position: absolute;
-    top: 12px;
-    left: 12px;
+#ui {
+    position: fixed;
+    top: 0; left: 0; right: 0;
     z-index: 9999;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 13px;
-    line-height: 1.7;
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.1);
-    min-width: 200px;
+    pointer-events: none;
 }
 
-#info .label { color: #aaa; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-#info .value { color: #4fc; font-weight: 600; }
+#topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+}
 
-#controls {
-    position: absolute;
-    bottom: 20px;
+#status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 13px;
+}
+
+#dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #f55;
+    box-shadow: 0 0 6px #f55;
+    animation: pulse 1.5s infinite;
+}
+#dot.found {
+    background: #4fc;
+    box-shadow: 0 0 10px #4fc;
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#hint {
+    position: fixed;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    white-space: nowrap;
+    transition: opacity 0.5s;
+    pointer-events: none;
+}
+#hint.hidden { opacity: 0; }
+
+#controls {
+    position: fixed;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9999;
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .btn {
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.7);
     color: white;
     border: 1px solid rgba(255,255,255,0.2);
-    padding: 10px 18px;
-    border-radius: 8px;
+    width: 46px; height: 46px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     backdrop-filter: blur(6px);
-    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
 }
-.btn:active { background: rgba(80,200,120,0.4); }
+.btn:active { background: rgba(80,200,120,0.5); }
 
-#status-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #f44;
-    margin-right: 6px;
-    vertical-align: middle;
+.btn-label {
+    font-size: 9px;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    margin-top: -4px;
 }
-#status-dot.ok { background: #4fc; box-shadow: 0 0 6px #4fc; }
 </style>
 </head>
-
 <body>
 
-<div id="info">
-    <span id="status-dot"></span><span id="status-text">Aguardando GPS...</span><br><br>
-    <span class="label">Latitude</span><br>
-    <span class="value" id="lat">—</span><br>
-    <span class="label">Longitude</span><br>
-    <span class="value" id="lon">—</span><br>
-    <span class="label">Precisão</span><br>
-    <span class="value" id="acc">—</span><br>
-    <span class="label">Escala atual</span><br>
-    <span class="value" id="escala-val">0.01</span><br>
-    <span class="label">Distância ao prédio</span><br>
-    <span class="value" id="dist">—</span>
+<div id="ui">
+    <div id="topbar">
+        <div id="status">
+            <div id="dot"></div>
+            <span id="status-text">Procurando marcador...</span>
+        </div>
+    </div>
 </div>
 
+<div id="hint">📄 Aponte a câmera para o marcador impresso</div>
+
 <div id="controls">
-    <button class="btn" onclick="ajustarEscala(0.5)">− Escala</button>
-    <button class="btn" onclick="ajustarEscala(2)">+ Escala</button>
-    <button class="btn" onclick="ajustarAltura(-1)">↓ Altura</button>
-    <button class="btn" onclick="ajustarAltura(1)">↑ Altura</button>
+    <div>
+        <button class="btn" onclick="ajustar('escala', 1.2)">＋</button>
+        <div class="btn-label">Escala</div>
+    </div>
+    <div>
+        <button class="btn" onclick="ajustar('escala', 0.8)">－</button>
+        <div class="btn-label">Escala</div>
+    </div>
+    <div style="height:10px"></div>
+    <div>
+        <button class="btn" onclick="ajustar('altura', 1)">↑</button>
+        <div class="btn-label">Altura</div>
+    </div>
+    <div>
+        <button class="btn" onclick="ajustar('altura', -1)">↓</button>
+        <div class="btn-label">Altura</div>
+    </div>
+    <div style="height:10px"></div>
+    <div>
+        <button class="btn" onclick="ajustar('rot', 15)">↻</button>
+        <div class="btn-label">Girar</div>
+    </div>
 </div>
 
 <a-scene
     vr-mode-ui="enabled: false"
     embedded
-    renderer="logarithmicDepthBuffer: true; colorManagement: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
 
     <a-assets timeout="30000">
-        <!-- 
-            IMPORTANTE: Troque a URL abaixo pela URL "raw" do seu arquivo no GitHub.
-            Exemplo:
-            ./predio.glb
-        -->
-        <a-asset-item
-            id="predio"
-            src="./predio.glb">
-        </a-asset-item>
+        <a-asset-item id="predio" src="./predio.glb"></a-asset-item>
     </a-assets>
 
-    <!--
-        AJUSTES PRINCIPAIS:
-        - scale: comece com "1 1 1" e use os botões para ajustar
-        - position Y: altura do modelo (0 = no chão, positivo = sobe)
-        - rotation: "-90 0 0" corrige modelos exportados deitados do SketchUp
-        - gps-new-entity-place: suas coordenadas GPS do prédio
-    -->
-    <!--
-        scale="0.01 0.01 0.01" converte centímetros do SketchUp para metros no AR.js
-        Seu prédio tem 4000cm = 40m, com essa escala fica 40 unidades = 40m no mundo real ✓
-    -->
-    <a-entity
-        id="predioGPS"
-        gltf-model="#predio"
-        gps-new-entity-place="latitude: -5.494951; longitude: -47.478713;"
-        scale="0.01 0.01 0.01"
-        position="0 0 0"
-        rotation="-90 0 0">
-    </a-entity>
+    <!-- Marcador HIRO — padrão do AR.js, muito robusto -->
+    <a-marker
+        id="marker"
+        preset="hiro"
+        raycaster="objects: .clickable"
+        emitevents="true"
+        cursor="fuse: false; rayOrigin: mouse;">
 
-    <!--
-        gps-new-camera: 
-        - simulateAltitude: coloca câmera 1.6m do chão (altura dos olhos)
-        - positionMinAccuracy: aceita GPS com até 100m de precisão
-        - minDistance: mostra objetos a partir de 1m de distância
-    -->
-    <a-camera
-        gps-new-camera="simulateAltitude: 1.6; positionMinAccuracy: 100; minDistance: 1"
-        far="100000"
-        near="0.01">
-    </a-camera>
+        <a-entity
+            id="predioAR"
+            gltf-model="#predio"
+            scale="0.01 0.01 0.01"
+            position="0 0 0"
+            rotation="-90 0 0">
+        </a-entity>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
 
 </a-scene>
 
 <script>
+let escala = 0.01;
+let altura = 0;
+let rotacao = -90;
 
-// ─── Coordenadas do prédio (para calcular distância) ───────────────────
-const PREDIO_LAT = -5.494951;
-const PREDIO_LON = -47.478713;
-
-// ─── Controles de escala e altura em tempo real ────────────────────────
-let escalaAtual = 0.01;
-let alturaAtual = 0;
-
-function ajustarEscala(fator) {
-    escalaAtual *= fator;
-    escalaAtual = Math.max(0.0001, Math.min(100, escalaAtual));
-    const el = document.getElementById('predioGPS');
-    el.setAttribute('scale', `${escalaAtual} ${escalaAtual} ${escalaAtual}`);
-    document.getElementById('escala-val').textContent = escalaAtual.toFixed(4);
+function ajustar(tipo, val) {
+    const el = document.getElementById('predioAR');
+    if (tipo === 'escala') {
+        escala = Math.max(0.0001, Math.min(100, escala * val));
+        el.setAttribute('scale', `${escala} ${escala} ${escala}`);
+    } else if (tipo === 'altura') {
+        altura += val * escala * 50;
+        el.setAttribute('position', `0 ${altura} 0`);
+    } else if (tipo === 'rot') {
+        rotacao += val;
+        el.setAttribute('rotation', `${rotacao} 0 0`);
+    }
 }
 
-function ajustarAltura(delta) {
-    alturaAtual += delta * escalaAtual * 100; // delta proporcional à escala
-    const el = document.getElementById('predioGPS');
-    el.setAttribute('position', `0 ${alturaAtual} 0`);
-}
+// Detectar marcador
+const marker = document.getElementById('marker');
 
-// ─── Cálculo de distância Haversine ───────────────────────────────────
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
+marker.addEventListener('markerFound', () => {
+    document.getElementById('dot').className = 'found';
+    document.getElementById('status-text').textContent = 'Marcador detectado ✓';
+    document.getElementById('hint').classList.add('hidden');
+});
 
-// ─── GPS ───────────────────────────────────────────────────────────────
-navigator.geolocation.watchPosition(
-    function(pos) {
-        const { latitude, longitude, accuracy } = pos.coords;
+marker.addEventListener('markerLost', () => {
+    document.getElementById('dot').className = '';
+    document.getElementById('status-text').textContent = 'Procurando marcador...';
+    document.getElementById('hint').classList.remove('hidden');
+});
 
-        document.getElementById('status-dot').className = 'ok';
-        document.getElementById('status-text').textContent = 'GPS ativo';
-        document.getElementById('lat').textContent = latitude.toFixed(6) + '°';
-        document.getElementById('lon').textContent = longitude.toFixed(6) + '°';
-        document.getElementById('acc').textContent = Math.round(accuracy) + ' m';
-
-        const dist = calcularDistancia(latitude, longitude, PREDIO_LAT, PREDIO_LON);
-        document.getElementById('dist').textContent =
-            dist < 1000
-                ? Math.round(dist) + ' m'
-                : (dist / 1000).toFixed(2) + ' km';
-    },
-    function(err) {
-        document.getElementById('status-text').textContent = 'Erro GPS: ' + err.message;
-    },
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-);
-
-// ─── Log quando o modelo carregar ─────────────────────────────────────
-document.querySelector('#predioGPS').addEventListener('model-loaded', () => {
-    console.log('✅ Modelo GLB carregado com sucesso!');
+// Log de carregamento
+document.getElementById('predioAR').addEventListener('model-loaded', () => {
     document.getElementById('status-text').textContent = 'Modelo carregado ✓';
 });
 
-document.querySelector('#predioGPS').addEventListener('model-error', (e) => {
-    console.error('❌ Erro ao carregar modelo:', e);
+document.getElementById('predioAR').addEventListener('model-error', () => {
     document.getElementById('status-text').textContent = '⚠ Erro ao carregar GLB';
 });
-
 </script>
 </body>
 </html>
